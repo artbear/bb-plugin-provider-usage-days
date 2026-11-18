@@ -1,0 +1,45 @@
+name: Verify Provider Usage Days against BB 0.50.1
+
+on:
+  push:
+    branches: [audit/bb-0.50.1]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BB_CLI: ""
+      BB_CLI_REEXEC: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "24.x"
+          package-manager-cache: false
+      - run: npm ci
+      - name: Select BB 0.50.1 and SDK 0.6.157
+        run: |
+          npm install --prefix "$RUNNER_TEMP/bb-toolchain" --no-audit --no-fund bb-app@0.50.1
+          npm install --no-save --package-lock=false --no-audit --no-fund @get-bb/plugin-sdk@0.6.157
+      - name: Build plugin with BB 0.50.1
+        run: |
+          "$RUNNER_TEMP/bb-toolchain/node_modules/.bin/bb" --version
+          "$RUNNER_TEMP/bb-toolchain/node_modules/.bin/bb" plugin build .
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          for (const artifact of ['app', 'server']) {
+            const meta = JSON.parse(readFileSync(`dist/${artifact}.meta.json`, 'utf8'));
+            assert.equal(meta.sdkVersion, '0.6.157');
+            assert.equal(meta.builtWith.bbVersion, '0.50.1');
+            console.log(meta);
+          }
+          NODE
+      - run: npm run typecheck
+      - run: npm test
