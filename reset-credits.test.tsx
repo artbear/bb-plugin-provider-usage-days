@@ -27,11 +27,11 @@ it("shows the two earliest unexpired resets on one sidebar line", () => {
   expect(view.container.textContent).toBe(
     "4 resets - #1 2 days left 30.10 21:45, #2 08.11 02:15 MSK",
   );
-  expect(
-    [...view.container.querySelectorAll("strong")].map(
-      (node) => node.textContent,
-    ),
-  ).toEqual(["2 days left"]);
+  const emphasis = [...view.container.querySelectorAll("strong")];
+  expect(emphasis.map((node) => node.textContent)).toEqual(["2 days left"]);
+  expect(emphasis.map((node) => node.className)).toEqual([
+    "font-bold text-primary",
+  ]);
   expect(view.container.textContent).not.toContain("01.12");
   expect(view.container.textContent).not.toContain("no expiry");
 });
@@ -82,11 +82,11 @@ it("lists every unexpired reset on its own settings line", () => {
     "#4: no expiry",
   ]);
   expect(view.container.textContent).not.toContain("27.10");
-  expect(
-    [...view.container.querySelectorAll("strong")].map(
-      (node) => node.textContent,
-    ),
-  ).toEqual(["2 days left"]);
+  const emphasis = [...view.container.querySelectorAll("strong")];
+  expect(emphasis.map((node) => node.textContent)).toEqual(["2 days left"]);
+  expect(emphasis.map((node) => node.className)).toEqual([
+    "font-bold text-primary",
+  ]);
 });
 
 it("distinguishes missing data, failure, zero resets, and no expiration", () => {

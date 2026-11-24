@@ -79,7 +79,11 @@ function DaysLeft({
   expiresAt: string;
   now: number;
 }) {
-  return <strong className="font-bold">{daysLeftLabel(expiresAt, now)}</strong>;
+  return (
+    <strong className="font-bold text-primary">
+      {daysLeftLabel(expiresAt, now)}
+    </strong>
+  );
 }
 
 function CompactResetLine({
