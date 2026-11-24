@@ -1,5 +1,5 @@
 import type { UsageProvider } from "./usage-schema.js";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 type ResetCredits = NonNullable<UsageProvider["resetCredits"]>;
 type ResetCredit = Extract<ResetCredits, { status: "ok" }>["credits"][number];
@@ -63,21 +63,65 @@ function resetNoun(count: number): string {
   return count === 1 ? "reset" : "resets";
 }
 
-function compactSummary(count: number, credits: readonly ResetCredit[]): string {
+function fullDaysLeft(expiresAt: string, now: number): number {
+  return Math.max(0, Math.floor((Date.parse(expiresAt) - now) / 86_400_000));
+}
+
+function daysLeftLabel(expiresAt: string, now: number): string {
+  const days = fullDaysLeft(expiresAt, now);
+  return `${days} ${days === 1 ? "day" : "days"} left`;
+}
+
+function DaysLeft({
+  expiresAt,
+  now,
+}: {
+  expiresAt: string;
+  now: number;
+}) {
+  return <strong className="font-bold">{daysLeftLabel(expiresAt, now)}</strong>;
+}
+
+function CompactResetLine({
+  count,
+  credits,
+  now,
+}: {
+  count: number;
+  credits: readonly ResetCredit[];
+  now: number;
+}) {
   const noun = `${count} ${resetNoun(count)}`;
   const shown = credits.slice(0, 2);
   if (shown.length === 0) {
-    return count > 0 ? `${noun} - expiration times were not received` : noun;
+    return (
+      <>
+        {count > 0 ? `${noun} - expiration times were not received` : noun}
+      </>
+    );
   }
-  const parts = shown.map((credit, index) =>
-    credit.expiresAt === null
-      ? `#${index + 1} no expiry`
-      : `#${index + 1} ${formatCompactResetDate(credit.expiresAt)}`,
+  return (
+    <>
+      {noun}
+      {" - "}
+      {shown.map((credit, index) => (
+        <Fragment key={credit.id}>
+          {index > 0 ? ", " : null}
+          {credit.expiresAt === null ? (
+            `#${index + 1} no expiry`
+          ) : index === 0 ? (
+            <>
+              #{index + 1} <DaysLeft expiresAt={credit.expiresAt} now={now} />{" "}
+              {formatCompactResetDate(credit.expiresAt)}
+            </>
+          ) : (
+            `#${index + 1} ${formatCompactResetDate(credit.expiresAt)}`
+          )}
+        </Fragment>
+      ))}
+      {shown.some((credit) => credit.expiresAt !== null) ? " MSK" : null}
+    </>
   );
-  const suffix = shown.some((credit) => credit.expiresAt !== null)
-    ? " MSK"
-    : "";
-  return `${noun} - ${parts.join(", ")}${suffix}`;
 }
 
 export function CodexResetCredits({
@@ -108,7 +152,11 @@ export function CodexResetCredits({
   if (layout === "compact") {
     return (
       <div data-codex-reset-credits="" className={className}>
-        {compactSummary(value.availableCount, credits)}
+        <CompactResetLine
+          count={value.availableCount}
+          credits={credits}
+          now={now}
+        />
       </div>
     );
   }
@@ -127,6 +175,12 @@ export function CodexResetCredits({
               <time dateTime={credit.expiresAt}>
                 {formatDetailResetDate(credit.expiresAt)}
               </time>
+              {index === 0 ? (
+                <>
+                  {" - "}
+                  <DaysLeft expiresAt={credit.expiresAt} now={now} />
+                </>
+              ) : null}
             </>
           )}
         </span>

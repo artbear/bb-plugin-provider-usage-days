@@ -24,14 +24,47 @@ it("shows the two earliest unexpired resets on one sidebar line", () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-28T18:00:00Z"));
   const view = render(<CodexResetCredits value={credits} layout="compact" />);
-  expect(view.container.querySelectorAll("[data-codex-reset-credits] > *")).toHaveLength(
-    0,
-  );
   expect(view.container.textContent).toBe(
-    "4 resets - #1 30.10 21:45, #2 08.11 02:15 MSK",
+    "4 resets - #1 2 days left 30.10 21:45, #2 08.11 02:15 MSK",
   );
+  expect(
+    [...view.container.querySelectorAll("strong")].map(
+      (node) => node.textContent,
+    ),
+  ).toEqual(["2 days left"]);
   expect(view.container.textContent).not.toContain("01.12");
   expect(view.container.textContent).not.toContain("no expiry");
+});
+
+it("uses full days and a singular day on the first reset", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-10-30T18:00:00Z"));
+  const view = render(
+    <CodexResetCredits
+      value={{
+        status: "ok",
+        availableCount: 1,
+        credits: [{ id: "soon", expiresAt: "2026-10-31T19:00:00Z" }],
+      }}
+      layout="compact"
+    />,
+  );
+  expect(view.container.textContent).toBe(
+    "1 reset - #1 1 day left 31.10 22:00 MSK",
+  );
+  view.rerender(
+    <CodexResetCredits
+      value={{
+        status: "ok",
+        availableCount: 1,
+        credits: [{ id: "soon", expiresAt: "2026-10-30T18:45:00Z" }],
+      }}
+      layout="detail"
+    />,
+  );
+  expect(view.container.textContent).toBe(
+    "1 reset#1: use by 30.10.2026, 21:45 MSK - 0 days left",
+  );
 });
 
 it("lists every unexpired reset on its own settings line", () => {
@@ -43,12 +76,17 @@ it("lists every unexpired reset on its own settings line", () => {
   );
   expect(lines).toEqual([
     "4 resets",
-    "#1: use by 30.10.2026, 21:45 MSK",
+    "#1: use by 30.10.2026, 21:45 MSK - 2 days left",
     "#2: use by 08.11.2026, 02:15 MSK",
     "#3: use by 01.12.2026, 03:00 MSK",
     "#4: no expiry",
   ]);
   expect(view.container.textContent).not.toContain("27.10");
+  expect(
+    [...view.container.querySelectorAll("strong")].map(
+      (node) => node.textContent,
+    ),
+  ).toEqual(["2 days left"]);
 });
 
 it("distinguishes missing data, failure, zero resets, and no expiration", () => {
