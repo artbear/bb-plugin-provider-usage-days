@@ -10,7 +10,9 @@ Codex weekly windows show 7 rectangular segments; Cursor (`acp-cursor`) shows 30
 Each segment represents 1/7 or 1/30 of the total quota. Fractional days fill part of
 one segment: 50% means 3.5 / 7 days for Codex or 15 / 30 days for Cursor. These are
 budget equivalents, independent of calendar days elapsed or billing-month length.
-Both the sidebar card and settings retain the original percentage bar.
+Both the sidebar card and settings retain the original percentage bar and show the remaining budget days. The meter tooltip and accessible description also report the equivalent used days.
+
+The local BB build also displays Codex reset credits and their expiration dates in Moscow time. The sidebar can read the machine selection saved by the bundled Provider Usage display when the new display has no saved selection.
 
 ## Install
 

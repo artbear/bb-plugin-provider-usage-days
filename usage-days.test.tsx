@@ -25,6 +25,8 @@ describe("day-equivalent usage", () => {
     expect(meter.children).toHaveLength(count);
     expect(meter.getAttribute("aria-valuenow")).toBe(String(days));
     expect(meter.getAttribute("aria-valuemax")).toBe(String(count));
+    const remaining = (count - days).toLocaleString(undefined, { maximumFractionDigits: 1 });
+    expect(view.getByText(`${remaining} days left`)).toBeTruthy();
     const filled = Array.from(meter.children).map((segment) =>
       segment.firstElementChild?.getAttribute("style"),
     );
@@ -45,6 +47,7 @@ describe("day-equivalent usage", () => {
       expect(meter.getAttribute("aria-valuenow")).toBe(
         percent <= 0 ? "0" : "7",
       );
+      expect(view.getByText(`${percent <= 0 ? 7 : 0} days left`)).toBeTruthy();
       for (const segment of meter.children) {
         expect(segment.firstElementChild?.getAttribute("style")).toBe(
           percent <= 0 ? "width: 0%;" : "width: 100%;",

@@ -16,7 +16,11 @@ export function UsageDays({
         : null;
   if (days === null) return null;
   const usedDays = (Math.max(0, window.usedPercent) * days) / 100;
-  const label = `${usedDays.toLocaleString(undefined, { maximumFractionDigits: 1 })} / ${days} days used`;
+  const dayFormat = { maximumFractionDigits: 1 };
+  const usedLabel = `${usedDays.toLocaleString(undefined, dayFormat)} / ${days} days used`;
+  const remainingDays = Math.max(0, days - usedDays);
+  const remainingLabel = `${remainingDays.toLocaleString(undefined, dayFormat)} days left`;
+  const description = `${usedLabel} · ${remainingLabel}`;
   return (
     <span className="flex min-w-0 items-center gap-2 py-0.5">
       <span
@@ -25,8 +29,8 @@ export function UsageDays({
         aria-valuemin={0}
         aria-valuemax={days}
         aria-valuenow={Math.min(days, usedDays)}
-        aria-valuetext={label}
-        title={`${label} · 1 day = ${(100 / days).toLocaleString(undefined, { maximumFractionDigits: 2 })}% of the limit`}
+        aria-valuetext={description}
+        title={`${description} · 1 day = ${(100 / days).toLocaleString(undefined, { maximumFractionDigits: 2 })}% of the limit`}
         className="grid min-w-0 flex-1 gap-px"
         style={{ gridTemplateColumns: `repeat(${days}, minmax(0, 1fr))` }}
       >
@@ -46,7 +50,7 @@ export function UsageDays({
         ))}
       </span>
       <span className="shrink-0 text-2xs tabular-nums text-subtle-foreground">
-        {label}
+        {remainingLabel}
       </span>
     </span>
   );

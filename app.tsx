@@ -54,6 +54,7 @@ import {
 import { UsageDays } from "./usage-days.js";
 
 import { UsageSettings } from "./settings.js";
+import { CodexResetCredits, formatCodexResetDate } from "./reset-credits.js";
 
 export interface UsageStoreSnapshot {
   data: UsageSnapshot | null;
@@ -80,7 +81,8 @@ function readSelectedMachine(storageKey: string | null): string | null {
   if (lastMachineId !== null) return lastMachineId;
   if (storageKey !== null) {
     try {
-      const stored = window.localStorage.getItem(storageKey);
+      const stored = window.localStorage.getItem(storageKey) ??
+        window.localStorage.getItem("bb.bb--provider-usage.selected-machine.v1");
       if (stored !== null && stored.length > 0) return stored;
     } catch {}
   }
@@ -329,7 +331,9 @@ function UsageWindow({
       </span>
       {showReset ? (
         <span className="col-span-full pb-1 text-2xs text-subtle-foreground">
-          {reset ?? "Reset time not reported."}
+          {providerId === "codex" && window.resetsAt !== null
+            ? `Сброс: ${formatCodexResetDate(window.resetsAt)}`
+            : (reset ?? "Reset time not reported.")}
           {window.cost === null ? "" : ` · ${value}`}
         </span>
       ) : null}
@@ -424,6 +428,9 @@ function AccountUsage({
             providerId={account.providerId}
           />
         ))
+      ) : null}
+      {usage?.status === "ok" && account.providerId === "codex" ? (
+        <CodexResetCredits value={account.resetCredits} />
       ) : null}
     </section>
   );
