@@ -288,7 +288,7 @@ function ProviderUsageBlock({
         </div>
       ) : null}
       {usage?.status === "ok" && config.providerId === "codex" ? (
-        <CodexResetCredits value={resetCredits} />
+        <CodexResetCredits value={resetCredits} layout="detail" />
       ) : null}
     </section>
   );

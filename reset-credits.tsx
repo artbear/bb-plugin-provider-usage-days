@@ -1,42 +1,53 @@
 import type { UsageProvider } from "./usage-schema.js";
 import { useEffect, useState } from "react";
 
-export function formatCodexResetDate(value: string): string {
-  return (
-    new Intl.DateTimeFormat("ru-RU", {
-      timeZone: "Europe/Moscow",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).format(new Date(value)) + " МСК"
-  );
+type ResetCredits = NonNullable<UsageProvider["resetCredits"]>;
+type ResetCredit = Extract<ResetCredits, { status: "ok" }>["credits"][number];
+
+const moscowTimeZone = "Europe/Moscow";
+
+function moscowParts(value: string) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: moscowTimeZone,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(value));
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const hour = read("hour") === "24" ? "00" : read("hour");
+  return {
+    day: read("day"),
+    month: read("month"),
+    year: read("year"),
+    hour,
+    minute: read("minute"),
+  };
 }
 
-export function CodexResetCredits({
-  value,
-}: {
-  value: UsageProvider["resetCredits"];
-}) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(timer);
-  }, []);
-  if (value == null) return null;
-  if (value.status === "error") {
-    return (
-      <div
-        data-codex-reset-credits=""
-        className="col-span-full text-2xs text-subtle-foreground"
-      >
-        Дополнительные сбросы: не удалось обновить
-      </div>
-    );
-  }
-  const credits = value.credits
+export function formatCodexResetDate(value: string): string {
+  const { day, month, year, hour, minute } = moscowParts(value);
+  return `${day}.${month}.${year}, ${hour}:${minute} МСК`;
+}
+
+function formatCompactResetDate(value: string): string {
+  const { day, month, hour, minute } = moscowParts(value);
+  return `${day}.${month} ${hour}:${minute}`;
+}
+
+function formatDetailResetDate(value: string): string {
+  const { day, month, year, hour, minute } = moscowParts(value);
+  return `${day}.${month}.${year}, ${hour}:${minute} MSK`;
+}
+
+function activeCredits(
+  credits: readonly ResetCredit[],
+  now: number,
+): ResetCredit[] {
+  return credits
     .filter(
       (credit) =>
         credit.expiresAt === null || new Date(credit.expiresAt).getTime() > now,
@@ -45,31 +56,83 @@ export function CodexResetCredits({
       (left, right) =>
         (left.expiresAt === null ? Infinity : Date.parse(left.expiresAt)) -
         (right.expiresAt === null ? Infinity : Date.parse(right.expiresAt)),
-    )
-    .slice(0, 2);
+    );
+}
+
+function resetNoun(count: number): string {
+  return count === 1 ? "reset" : "resets";
+}
+
+function compactSummary(count: number, credits: readonly ResetCredit[]): string {
+  const noun = `${count} ${resetNoun(count)}`;
+  const shown = credits.slice(0, 2);
+  if (shown.length === 0) {
+    return count > 0 ? `${noun} - expiration times were not received` : noun;
+  }
+  const parts = shown.map((credit, index) =>
+    credit.expiresAt === null
+      ? `#${index + 1} no expiry`
+      : `#${index + 1} ${formatCompactResetDate(credit.expiresAt)}`,
+  );
+  const suffix = shown.some((credit) => credit.expiresAt !== null)
+    ? " MSK"
+    : "";
+  return `${noun} - ${parts.join(", ")}${suffix}`;
+}
+
+export function CodexResetCredits({
+  value,
+  layout,
+}: {
+  value: UsageProvider["resetCredits"];
+  layout: "compact" | "detail";
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  if (value == null) return null;
+  const className =
+    layout === "compact"
+      ? "col-span-full text-2xs text-subtle-foreground"
+      : "col-span-full grid gap-1 text-2xs text-subtle-foreground";
+  if (value.status === "error") {
+    return (
+      <div data-codex-reset-credits="" className={className}>
+        Additional resets: could not refresh
+      </div>
+    );
+  }
+  const credits = activeCredits(value.credits, now);
+  if (layout === "compact") {
+    return (
+      <div data-codex-reset-credits="" className={className}>
+        {compactSummary(value.availableCount, credits)}
+      </div>
+    );
+  }
   return (
-    <div
-      data-codex-reset-credits=""
-      className="col-span-full grid gap-1 text-2xs text-subtle-foreground"
-    >
-      <span>Дополнительные сбросы: {value.availableCount}</span>
+    <div data-codex-reset-credits="" className={className}>
+      <span>
+        {value.availableCount} {resetNoun(value.availableCount)}
+      </span>
       {credits.map((credit, index) => (
         <span key={credit.id}>
-          Сброс {index + 1}:{" "}
           {credit.expiresAt === null ? (
-            "без срока действия"
+            `#${index + 1}: no expiry`
           ) : (
             <>
-              использовать до{" "}
+              #{index + 1}: use by{" "}
               <time dateTime={credit.expiresAt}>
-                {formatCodexResetDate(credit.expiresAt)}
+                {formatDetailResetDate(credit.expiresAt)}
               </time>
             </>
           )}
         </span>
       ))}
       {value.availableCount > 0 && credits.length === 0 ? (
-        <span>Сроки доступных сбросов не получены.</span>
+        <span>Expiration times were not received.</span>
       ) : null}
     </div>
   );

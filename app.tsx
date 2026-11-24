@@ -430,7 +430,7 @@ function AccountUsage({
         ))
       ) : null}
       {usage?.status === "ok" && account.providerId === "codex" ? (
-        <CodexResetCredits value={account.resetCredits} />
+        <CodexResetCredits value={account.resetCredits} layout="compact" />
       ) : null}
     </section>
   );
