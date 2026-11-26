@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { CodexResetCredits, formatCodexResetDate } from "./reset-credits.js";
+import { CodexResetCredits, formatCodexReset } from "./reset-credits.js";
 
 const credits = {
   status: "ok" as const,
@@ -131,7 +131,7 @@ it("distinguishes missing data, failure, zero resets, and no expiration", () => 
 });
 
 it("formats the regular quota reset using the same explicit timezone", () => {
-  expect(formatCodexResetDate("2026-11-05T07:00:00Z")).toBe(
-    "05.11.2026, 10:00 МСК",
+  expect(formatCodexReset("2026-11-05T07:00:00Z")).toBe(
+    "Сброс: 05.11.2026, 10:00 МСК",
   );
 });

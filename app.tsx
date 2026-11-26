@@ -54,7 +54,7 @@ import {
 import { UsageDays } from "./usage-days.js";
 
 import { UsageSettings } from "./settings.js";
-import { CodexResetCredits, formatCodexResetDate } from "./reset-credits.js";
+import { CodexResetCredits, formatCodexReset } from "./reset-credits.js";
 
 export interface UsageStoreSnapshot {
   data: UsageSnapshot | null;
@@ -331,9 +331,9 @@ function UsageWindow({
       </span>
       {showReset ? (
         <span className="col-span-full pb-1 text-2xs text-subtle-foreground">
-          {providerId === "codex" && window.resetsAt !== null
-            ? `Сброс: ${formatCodexResetDate(window.resetsAt)}`
-            : (reset ?? "Reset time not reported.")}
+          {(providerId === "codex"
+            ? formatCodexReset(window.resetsAt)
+            : reset) ?? "Reset time not reported."}
           {window.cost === null ? "" : ` · ${value}`}
         </span>
       ) : null}

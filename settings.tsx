@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { providerUsageRpcContract, UsageRequest } from "./server.js";
-import { CodexResetCredits, formatCodexResetDate } from "./reset-credits.js";
+import { CodexResetCredits, formatCodexReset } from "./reset-credits.js";
 import {
   emptyUsageMessage,
   hasReportedUsage,
@@ -119,8 +119,8 @@ function UsageWindowRow({
   providerId: string;
 }) {
   const reset =
-    providerId === "codex" && window.resetsAt !== null
-      ? `Сброс: ${formatCodexResetDate(window.resetsAt)}`
+    providerId === "codex"
+      ? formatCodexReset(window.resetsAt)
       : formatReset(window.resetsAt);
   return (
     <div className="space-y-1">

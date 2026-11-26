@@ -11,7 +11,11 @@ import type {
 
 installTestPluginRuntime();
 
-function account(id: string, providerId = "codex"): UsageProvider {
+function account(
+  id: string,
+  providerId = "codex",
+  resetsAt = new Date(Date.now() + 3600_000).toISOString(),
+): UsageProvider {
   return {
     id,
     providerId,
@@ -30,7 +34,7 @@ function account(id: string, providerId = "codex"): UsageProvider {
         {
           label: "Weekly limit",
           usedPercent: 42,
-          resetsAt: new Date(Date.now() + 3600_000).toISOString(),
+          resetsAt,
           cost: null,
         },
       ],
@@ -196,6 +200,16 @@ describe("UsageSettingsContent", () => {
     expect(html).not.toContain("local@example.com");
     expect(html.match(/Resets in/g)).toHaveLength(1);
     expect(html.match(/Сброс:/g)).toHaveLength(2);
+  });
+
+  it("shows Codex usage without a reset line when the reset date is invalid", () => {
+    const html = renderContent({
+      machines: [
+        machine("source:pool", [account("first", "codex", "unknown")]),
+      ],
+    });
+    expect(html).toContain("42% used");
+    expect(html).not.toContain("Сброс:");
   });
 
   it("renders loading before any source is known", () => {

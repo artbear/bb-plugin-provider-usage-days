@@ -6,7 +6,7 @@ type ResetCredit = Extract<ResetCredits, { status: "ok" }>["credits"][number];
 
 const moscowTimeZone = "Europe/Moscow";
 
-function moscowParts(value: string) {
+function moscowParts(date: Date) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: moscowTimeZone,
     day: "2-digit",
@@ -15,7 +15,7 @@ function moscowParts(value: string) {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-  }).formatToParts(new Date(value));
+  }).formatToParts(date);
   const read = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((part) => part.type === type)?.value ?? "";
   const hour = read("hour") === "24" ? "00" : read("hour");
@@ -28,18 +28,21 @@ function moscowParts(value: string) {
   };
 }
 
-export function formatCodexResetDate(value: string): string {
-  const { day, month, year, hour, minute } = moscowParts(value);
-  return `${day}.${month}.${year}, ${hour}:${minute} МСК`;
+export function formatCodexReset(value: string | null): string | null {
+  if (value === null) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const { day, month, year, hour, minute } = moscowParts(date);
+  return `Сброс: ${day}.${month}.${year}, ${hour}:${minute} МСК`;
 }
 
 function formatCompactResetDate(value: string): string {
-  const { day, month, hour, minute } = moscowParts(value);
+  const { day, month, hour, minute } = moscowParts(new Date(value));
   return `${day}.${month} ${hour}:${minute}`;
 }
 
 function formatDetailResetDate(value: string): string {
-  const { day, month, year, hour, minute } = moscowParts(value);
+  const { day, month, year, hour, minute } = moscowParts(new Date(value));
   return `${day}.${month}.${year}, ${hour}:${minute} MSK`;
 }
 

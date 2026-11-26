@@ -43,6 +43,7 @@ function threadOnMachine(
       backgroundAgents: 0,
       backgroundCommands: 0,
       planMode: 0,
+      goals: 0,
     },
     indicator: "none",
     indicatorLabel: null,
@@ -156,7 +157,7 @@ describe("provider usage footer disclosure", () => {
                           {
                             label: "Weekly limit",
                             usedPercent: 37,
-                            resetsAt: null,
+                            resetsAt: "unknown",
                             cost: null,
                           },
                         ],
@@ -328,6 +329,12 @@ describe("provider usage footer disclosure", () => {
       slot.getByRole("heading", { name: "codex@example.com" }),
     ).toBeTruthy();
     expect(slot.getByText("37%")).toBeTruthy();
+    fireEvent.click(
+      slot.getByRole("button", {
+        name: "Weekly limit: 37% used. Reset time not reported",
+      }),
+    );
+    expect(slot.getByText("Reset time not reported.")).toBeTruthy();
     fireEvent.keyDown(codexTab, { key: "ArrowLeft" });
     expect(claudeTab.getAttribute("aria-selected")).toBe("true");
 
